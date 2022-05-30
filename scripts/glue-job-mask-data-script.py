@@ -22,7 +22,7 @@ bucket_athena="s3://dcp-athena-AWS_REGION-ACCOUNT_ID".replace("_", "-")
 
 
 #inputs to KMS
-key_id = "KEY_NAME"
+key_id = "alias/encryptionDataRow"
 region_name = "us_east_1".replace("_", "-")
 
 
@@ -99,48 +99,6 @@ if 'detail' in macie_findings_df.columns:
         print ("DEBUG:",sys.exc_info())
     
 
-def get_secret():
-
-    # Create a Secrets Manager client
-    session = boto3.session.Session()
-    client = session.client(service_name='secretsmanager',region_name=region_name)
-
-
-    try:
-        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
-        
-    except ClientError as e:
-        if e.response['Error']['Code'] == 'DecryptionFailureException':
-            # Secrets Manager can't decrypt the protected secret text using the provided KMS key.
-            # Deal with the exception here, and/or rethrow at your discretion.
-            raise e
-        elif e.response['Error']['Code'] == 'InternalServiceErrorException':
-            # An error occurred on the server side.
-            # Deal with the exception here, and/or rethrow at your discretion.
-            raise e
-        elif e.response['Error']['Code'] == 'InvalidParameterException':
-            # You provided an invalid value for a parameter.
-            # Deal with the exception here, and/or rethrow at your discretion.
-            raise e
-        elif e.response['Error']['Code'] == 'InvalidRequestException':
-            # You provided a parameter value that is not valid for the current state of the resource.
-            # Deal with the exception here, and/or rethrow at your discretion.
-            raise e
-        elif e.response['Error']['Code'] == 'ResourceNotFoundException':
-            # We can't find the resource that you asked for.
-            # Deal with the exception here, and/or rethrow at your discretion.
-            raise e
-    else:
-        # Decrypts secret using the associated KMS key.
-        # Depending on whether the secret is a string or binary, one of these fields will be populated.
-        if 'SecretString' in get_secret_value_response:
-            secret = get_secret_value_response['SecretString']
-        else:
-            decoded_binary_secret = base64.b64decode(get_secret_value_response['SecretBinary'])
-        
-    return secret 
-
-
 def masked_rows(r):
     try:
         for entity in columns_to_be_masked_and_encrypted:
@@ -160,15 +118,8 @@ def get_kms_encryption(row):
     try:
         encryption_result = client.encrypt(KeyId=key_id, Plaintext=row)
         blob = encryption_result['CiphertextBlob']
-        encrypted_row = base64.b64encode(blob)
-        print('encrypted_row________', encrypted_row)
-        string_teste = encrypted_row.decode("utf-8")
-        
-        #decrypt
-        decrypted = client.decrypt(CiphertextBlob=base64.b64decode(string_teste))
-        print('decrypted 999999999999999',decrypted['Plaintext'])
-        
-        return string_teste
+        encrypted_row = base64.b64encode(blob)        
+        return encrypted_row
         
     except:
         print('Erro')
@@ -177,16 +128,12 @@ def get_kms_encryption(row):
 
 
 def encrypt_rows(r):
-    #retrieve the secret in Secrets Manager
-    salted_string = get_secret()
-    print(salted_string)
     encrypted_entities = columns_to_be_masked_and_encrypted
-    # print ("encrypt_rows", salted_string, encrypted_entities)
     try:
         for entity in encrypted_entities:
             if entity in table_columns:
                 encrypted_entity = get_kms_encryption(r[entity])
-                r[entity + '_encrypted'] = encrypted_entity
+                r[entity + '_encrypted'] = encrypted_entity.decode("utf-8")
                 del r[entity]
     except:
         print ("DEBUG:",sys.exc_info())

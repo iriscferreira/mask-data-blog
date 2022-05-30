@@ -307,7 +307,7 @@ Resources:
         Ref: ConfidentialKey
 
 
-  keyToApplication:
+  KeyToApplication:
     Type: 'AWS::KMS::Key'
     Properties:
       Description: symmetric encryption KMS key
@@ -368,11 +368,11 @@ Resources:
               Bool:
                 kms:GrantIsForAWSResource: 'true'
 
-  myAliasKey:
+  AliasKey:
     Type: 'AWS::KMS::Alias'
     Properties:
       AliasName: alias/encryptionDataRow
-      TargetKeyId: !Ref keyToApplication
+      TargetKeyId: !Ref KeyToApplication
 
 # #    ____ _____
 # #   / ___|___ /
@@ -835,7 +835,7 @@ Resources:
           ATHENA_BUCKET: !Sub ${AthenaBucket.Arn}
           ASSETS_BUCKET: !Ref AssetsBucket
           ACCOUNT_ID: !Ref AWS::AccountId
-          KEY_NAME: !Sub 'arn:aws:kms:${AWS::Region}:${AWS::AccountId}:key/encryptionDataRow'
+          KEY_NAME: 'alias/encryptionDataRow'
           SCRIPT_URL: https://raw.githubusercontent.com/iriscferreira/mask-data-blog/main/scripts/glue-job-mask-data-script.py
       Code:
         ZipFile: |
