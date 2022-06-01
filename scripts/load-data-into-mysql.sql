@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS dataset.customer(
     id INT NOT NULL,
     username varchar(200) not null, 
     name varchar(200) not null, 
-    sex  varchar(200) not null, 
+    gender  varchar(200) not null, 
     mail  varchar(200) not null, 
     birthdate  varchar(200) not null 
 );
