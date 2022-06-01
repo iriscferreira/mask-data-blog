@@ -23,6 +23,7 @@ fake_banks = [
 
 df_fake_profile = pd.DataFrame(fake_profile)
 del df_fake_profile['address']
+df_fake_profile.columns = df_fake_profile.columns.str.replace('sex', 'gender')
 
 df_fake_credit_cards = pd.DataFrame(fake_credit_cards)
 
