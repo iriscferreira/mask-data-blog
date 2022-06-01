@@ -122,9 +122,7 @@ def get_kms_encryption(row):
         return encrypted_row
         
     except:
-        print('Erro')
-
-    return '' 
+        return 'Error on get_kms_encryption function'
 
 
 def encrypt_rows(r):

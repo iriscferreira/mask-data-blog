@@ -389,7 +389,9 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
-    # DeletionPolicy: Retain
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: macie-logs
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -397,7 +399,6 @@ Resources:
             reason: "This is a private bucket."
           - id: W35
             reason: "Private bucket without logging configured"
-
 
   GlueBucket:
     Type: AWS::S3::Bucket
@@ -407,6 +408,9 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: glue-logs
       NotificationConfiguration:
         LambdaConfigurations:
           - Event: 's3:ObjectCreated:*'
@@ -429,6 +433,9 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: athena-logs
     Metadata:
       cfn_nag:
         rules_to_suppress:
@@ -441,15 +448,28 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub '${Prefix}-assets-${AWS::Region}-${AWS::AccountId}'
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LoggingConfiguration:
+        DestinationBucketName: !Ref LoggingBucket
+        LogFilePrefix: assets-logs
     Metadata:
       cfn_nag:
         rules_to_suppress:
           - id: W51
             reason: "This is a private bucket."
-          - id: W41
-            reason: "S3 Bucket without an encryption set."
-          - id: W35
-            reason: "Private bucket without logging configured."
+
+  LoggingBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Prefix}-logging-${AWS::Region}-${AWS::AccountId}'
+      AccessControl: LogDeliveryWrite
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
 
   MacieFindingsDeliveryStream:
     DependsOn:
